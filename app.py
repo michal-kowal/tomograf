@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from ttkthemes import ThemedTk
 from tkcalendar import DateEntry
+from simulation import simulate
 
 class Application(ThemedTk):
     def __init__(self):
@@ -11,6 +12,8 @@ class Application(ThemedTk):
 
         self.title("Tomograf")
         self.geometry("1000x700")
+
+        self.file_path = None
 
         self.title_label = ttk.Label(self, text="Tomograf", font=(24))
         self.title_label.pack(pady=10)
@@ -62,7 +65,7 @@ class Application(ThemedTk):
 
         self.dicom_fields_frame.pack_forget()
 
-        self.simulate_button = ttk.Button(self, text="Symuluj")
+        self.simulate_button = ttk.Button(self, text="Symuluj", command=self.run_simulation)
         self.simulate_button.pack(pady=10)
 
     def toggle_dicom_fields(self):
@@ -72,8 +75,8 @@ class Application(ThemedTk):
             self.dicom_fields_frame.pack()
 
     def choose_file(self):
-        file_path = filedialog.askopenfilename()
-        self.file_label.config(text=file_path)
+        self.file_path = filedialog.askopenfilename()
+        self.file_label.config(text=self.file_path)
 
     def create_entry(self, parent, text):
         frame = ttk.Frame(parent)
@@ -87,3 +90,6 @@ class Application(ThemedTk):
         frame.pack(side=tk.LEFT, padx=20)
 
         return entry
+    
+    def run_simulation(self):
+        simulate(self.file_path, self.angle_entry.get(), self.detectors_entry.get(), self.span_entry.get())
