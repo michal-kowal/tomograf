@@ -92,4 +92,4 @@ class Application(ThemedTk):
         return entry
     
     def run_simulation(self):
-        simulate(self.file_path, float(self.angle_entry.get()), int(self.detectors_entry.get()), float(self.span_entry.get()))
+        simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()))

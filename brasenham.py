@@ -1,11 +1,9 @@
 def bresenham_line(x1, y1, x2, y2):
     points = []
-    
-    # Oblicz różnice
     dx = abs(x2 - x1)
     dy = abs(y2 - y1)
     
-    # Określ kierunek
+    # kierunki x i y
     if x1 < x2:
         step_x = 1
     else:
@@ -16,12 +14,12 @@ def bresenham_line(x1, y1, x2, y2):
     else:
         step_y = -1
     
-    # Oblicz kroki
-    if dx > dy:
+    # wybor wspolrzednej
+    if dx > dy: # ruch po x
         p = 2 * dy - dx
         while x1 != x2:
             points.append((x1, y1))
-            if p >= 0:
+            if p >= 0: # zmiana wspolrzednej y
                 y1 += step_y
                 p -= 2 * dx
             x1 += step_x
