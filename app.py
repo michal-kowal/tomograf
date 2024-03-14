@@ -40,7 +40,8 @@ class Application(ThemedTk):
         self.step_checkbox = ttk.Checkbutton(self.checkbox_frame, text="Wyświetlaj kroki pośrednie")
         self.step_checkbox.pack(side=tk.LEFT)
 
-        self.filter_checkbox = ttk.Checkbutton(self.checkbox_frame, text="Użyj filtrowania")
+        self.filter_var = tk.IntVar()
+        self.filter_checkbox = ttk.Checkbutton(self.checkbox_frame, text="Użyj filtrowania", variable=self.filter_var)
         self.filter_checkbox.pack(side=tk.LEFT)
 
         self.dicom_checkbox = ttk.Checkbutton(self.checkbox_frame, text="Generuj plik dicom", command=self.toggle_dicom_fields)
@@ -92,4 +93,5 @@ class Application(ThemedTk):
         return entry
     
     def run_simulation(self):
-        simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()))
+        simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
+                 self.filter_var.get())

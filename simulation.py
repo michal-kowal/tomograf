@@ -2,6 +2,7 @@ from matplotlib.image import imread
 import numpy as np
 from skimage import color
 from brasenham import bresenham_line
+from filter import filter_sinogram
 import os
 import glob
 from PIL import Image
@@ -12,7 +13,8 @@ def clear_directory(directory_path):
     for f in files:
         os.remove(f)
 
-def simulate(input_path, angle, detectors, span):
+def simulate(input_path, angle, detectors, span, filter):
+    print("filtrowanie: " + str(filter))
     output_dir = "./result"
     clear_directory(output_dir)
 
@@ -31,6 +33,7 @@ def simulate(input_path, angle, detectors, span):
     span = np.deg2rad(span)
     sinogram = np.zeros((int(2 * np.pi / angle), detectors))
 
+    # dla każdej pary emiter-detektor oblicz sume intensywnosci pikseli na prostej miedzy nimi
     for e_id, e_angle in zip(range(int(2 * np.pi / angle)), np.arange(0, 2 * np.pi, angle)):
         e_coords = [int (x + r * np.cos(e_angle)), int (y + r * np.sin(e_angle))] # współrzędne emitera
         
@@ -52,7 +55,41 @@ def simulate(input_path, angle, detectors, span):
                 sinogram[e_id][d_id] = 0
     
     sinogram_scaled = (255.0 / np.amax(sinogram)) * sinogram
-    sinogram_scaled = sinogram_scaled.astype(np.uint8)
+    sinogram_scaled = sinogram_scaled.astype(np.uint8) # konwersja na uint8
     sinogram_image = Image.fromarray(sinogram_scaled.T, mode='L')
     sinogram_resized = sinogram_image.resize(image.shape, resample=Image.NEAREST)
     sinogram_resized.save(output_dir + "/sinogram.png")
+
+    # dodac filtrowanie
+    if filter == 1:
+        sinogram_filtered = filter_sinogram(sinogram)
+    else:
+        sinogram_filtered = sinogram
+    result = np.zeros(image.shape)
+    norm = np.zeros(image.shape)
+
+    for i in range(sinogram_filtered.shape[0]):
+        e_coords = [int (x + r * np.cos(i * angle)), int (y + r * np.sin(i * angle))] # współrzędne emitera
+        for j in range(sinogram_filtered.shape[1]):
+            d_angle = angle * i + np.pi - span / 2 + j * span / sinogram_filtered.shape[1]
+            d_coords = [int (x + r * np.cos(d_angle)), int (y + r * np.sin(d_angle))]
+
+            line_points = bresenham_line(e_coords[0], e_coords[1], d_coords[0], d_coords[1])
+
+            for p in line_points:
+                if 0 <= p[0] < image.shape[0] and 0 <= p[1] < image.shape[1]:
+                    result[p[0]][p[1]] += sinogram_filtered[i][j]
+                    norm[p[0]][p[1]] += 1
+    
+    max_norm = max([max(row) for row in norm])
+    for x in range(result.shape[0]):
+        for y in range(result.shape[1]):
+            if norm[x][y] != 0:
+                result[x][y] = result[x][y] / norm[x][y]
+            else:
+                result[x][y] = 0
+    
+    result_scaled = (255.0 / np.amax(result)) * result
+    result_scaled = result_scaled.astype(np.uint8)
+    result_image = Image.fromarray(result_scaled, mode='L')
+    result_image.save(output_dir + "/result.png")
