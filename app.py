@@ -158,8 +158,18 @@ class Application(ThemedTk):
         frame = ttk.Frame(self.slider_frame)
         frame.pack()
         to = 360/int(self.angle_entry.get())
-        slider = ttk.Scale(frame, from_=0, to=to, orient='horizontal')
-        slider.grid(row=0, column=1, columnspan=1, sticky='ew', padx=(0, 10), pady=(10, 0))
+        slider = ttk.Scale(frame, from_=1, to=to, orient='horizontal')
+        slider.grid(row=0, column=1, columnspan=2, sticky='ew', padx=(0, 10), pady=(10, 0))
+
+        slider.set(to)
+        slider.bind("<Motion>", lambda event, slider=slider: self.on_slider_change(event, slider))
+        
+
+    def on_slider_change(self, event, slider):
+        slider_value = int(event.widget.get())
+        sinogram_path = f"./sinogram_iterations/sinogram_iteration_{slider_value-1}.png"
+        result_path = f"./result_iterations/result_iteration_{slider_value-1}.png"
+        self.display_images(sinogram_path, result_path)
 
     def run_simulation(self):
         simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),

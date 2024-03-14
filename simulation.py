@@ -17,7 +17,15 @@ def simulate(input_path, angle, detectors, span, filter, step):
     print("filtrowanie: " + str(filter))
     print("kroki pośrednie: " + str(step))
     output_dir = "./result"
-    clear_directory(output_dir)
+    sinogram_iterations_dir = "./sinogram_iterations"
+    result_iterations_dir = "./result_iterations"
+    if step == 1:
+        clear_directory(sinogram_iterations_dir)
+        clear_directory(result_iterations_dir)
+    else:
+        clear_directory(output_dir)
+    
+    step_counter = 0
 
     image = imread(input_path)
     try:
@@ -54,6 +62,13 @@ def simulate(input_path, angle, detectors, span, filter, step):
                 sinogram[e_id][d_id] = sum / points_counter
             else:
                 sinogram[e_id][d_id] = 0
+        if step == 1:
+            sinogram_step_scaled = (255.0 / np.amax(sinogram)) * sinogram
+            sinogram_step_scaled = sinogram_step_scaled.astype(np.uint8)
+            sinogram_step_image = Image.fromarray(sinogram_step_scaled.T, mode='L')
+            sinogram_step_resized = sinogram_step_image.resize(image.shape, resample=Image.NEAREST)
+            sinogram_step_resized.save(sinogram_iterations_dir + "/sinogram_iteration_" + str(step_counter) + ".png")
+            step_counter += 1
     
     sinogram_scaled = (255.0 / np.amax(sinogram)) * sinogram
     sinogram_scaled = sinogram_scaled.astype(np.uint8) # konwersja na uint8
@@ -66,9 +81,11 @@ def simulate(input_path, angle, detectors, span, filter, step):
         sinogram_filtered = filter_sinogram(sinogram)
     else:
         sinogram_filtered = sinogram
+        
     result = np.zeros(image.shape)
     norm = np.zeros(image.shape)
 
+    step_counter = 0
     for i in range(sinogram_filtered.shape[0]):
         e_coords = [int (x + r * np.cos(i * angle)), int (y + r * np.sin(i * angle))] # współrzędne emitera
         for j in range(sinogram_filtered.shape[1]):
@@ -81,14 +98,27 @@ def simulate(input_path, angle, detectors, span, filter, step):
                 if 0 <= p[0] < image.shape[0] and 0 <= p[1] < image.shape[1]:
                     result[p[0]][p[1]] += sinogram_filtered[i][j]
                     norm[p[0]][p[1]] += 1
+        if step == 1:
+            result_step = result.copy()
+            for k in range(result_step.shape[0]):
+                for l in range(result_step.shape[1]):
+                    if norm[k][l] != 0:
+                        result_step[k][l] = result_step[k][l] / norm[k][l]
+                    else:
+                        result_step[k][l] = 0
+            result_step_scaled = (255.0 / np.amax(result_step)) * result_step
+            result_step_scaled = result_step_scaled.astype(np.uint8)
+            result_step_image = Image.fromarray(result_step_scaled, mode='L')
+            result_step_image.save(result_iterations_dir + "/result_iteration_" + str(step_counter) + ".png")
+            step_counter += 1
     
     max_norm = max([max(row) for row in norm])
-    for x in range(result.shape[0]):
-        for y in range(result.shape[1]):
-            if norm[x][y] != 0:
-                result[x][y] = result[x][y] / norm[x][y]
+    for j in range(result.shape[0]):
+        for i in range(result.shape[1]):
+            if norm[j][i] != 0:
+                result[j][i] = result[j][i] / norm[j][i]
             else:
-                result[x][y] = 0
+                result[j][i] = 0
     
     result_scaled = (255.0 / np.amax(result)) * result
     result_scaled = result_scaled.astype(np.uint8)
