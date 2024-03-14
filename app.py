@@ -74,6 +74,9 @@ class Application(ThemedTk):
         self.photo_frame = ttk.Frame(self)
         self.photo_frame.pack(pady=10)
 
+        self.slider_frame = ttk.Frame(self)
+        self.slider_frame.pack(pady=10)
+
     def toggle_dicom_fields(self):
         if self.dicom_fields_frame.winfo_viewable():
             self.dicom_fields_frame.pack_forget()
@@ -82,6 +85,9 @@ class Application(ThemedTk):
 
         if self.photo_frame.winfo_viewable():
             self.photo_frame.pack_forget()
+        
+        if self.slider_frame.winfo_viewable():
+            self.slider_frame.pack_forget()
 
     def choose_file(self):
         self.file_path = filedialog.askopenfilename()
@@ -100,7 +106,7 @@ class Application(ThemedTk):
 
         return entry
     
-    def display_images(self):
+    def display_images(self, sinogram, result):
         if not self.photo_frame.winfo_viewable():
             self.photo_frame.pack(pady=10)
         
@@ -108,8 +114,8 @@ class Application(ThemedTk):
             widget.destroy()
         
         img1 = Image.open(self.file_path)
-        img2 = Image.open("./result/sinogram.png")
-        img3 = Image.open("./result/result.png")
+        img2 = Image.open(sinogram)
+        img3 = Image.open(result)
 
         img1 = img1.resize((250, 250))
         img2 = img2.resize((250, 250))
@@ -122,7 +128,6 @@ class Application(ThemedTk):
         image_title_frame = ttk.Frame(self.photo_frame)
         image_title_frame.pack()
 
-        # Tworzymy etykiety dla tytułów i obrazów, dodając je do ramki
         img1_label_text = ttk.Label(image_title_frame, text="Obraz wejściowy")
         img1_label_text.grid(row=0, column=0, padx=(0, 10))
 
@@ -143,11 +148,26 @@ class Application(ThemedTk):
         img3_label = ttk.Label(image_title_frame, image=img3)
         img3_label.image = img3
         img3_label.grid(row=1, column=2)
+        
 
-
-
+    def show_slider(self):
+        if not self.slider_frame.winfo_viewable():
+            self.slider_frame.pack(pady=10)
+        for widget in self.slider_frame.winfo_children():
+            widget.destroy()
+        frame = ttk.Frame(self.slider_frame)
+        frame.pack()
+        to = 360/int(self.angle_entry.get())
+        slider = ttk.Scale(frame, from_=0, to=to, orient='horizontal')
+        slider.grid(row=0, column=1, columnspan=1, sticky='ew', padx=(0, 10), pady=(10, 0))
 
     def run_simulation(self):
         simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
                  self.filter_var.get(), self.step_var.get())
-        self.display_images()
+        if self.step_var.get() == 1:
+            self.display_images("./result/sinogram.png", "./result/result.png")
+            self.show_slider()
+        else:
+            if self.slider_frame.winfo_viewable():
+                self.slider_frame.pack_forget()
+            self.display_images("./result/sinogram.png", "./result/result.png") 
