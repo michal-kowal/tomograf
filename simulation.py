@@ -13,8 +13,9 @@ def clear_directory(directory_path):
     for f in files:
         os.remove(f)
 
-def simulate(input_path, angle, detectors, span, filter):
+def simulate(input_path, angle, detectors, span, filter, step):
     print("filtrowanie: " + str(filter))
+    print("kroki pośrednie: " + str(step))
     output_dir = "./result"
     clear_directory(output_dir)
 
