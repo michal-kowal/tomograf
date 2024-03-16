@@ -183,10 +183,10 @@ class Application(ThemedTk):
     def run_simulation(self):
         if self.dicom_var.get() == 1:
             patient = Patient(self.name_entry.get(), self.id_entry.get(), self.date_entry.get(), self.comment_entry.get())
-            mse = simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
+            mse = simulate(self.file_path, float(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
                  self.filter_var.get(), self.step_var.get(), self.dicom_var.get(), patient)
         else:
-            mse = simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
+            mse = simulate(self.file_path, float(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
                  self.filter_var.get(), self.step_var.get(), self.dicom_var.get())
         self.show_mse(mse)
         if self.step_var.get() == 1:
