@@ -108,6 +108,7 @@ def simulate(input_path, angle, detectors, span, filter, step, dicom, patient: P
     norm = np.zeros(image.shape)
 
     step_counter = 0
+    mse = []
     for i in range(sinogram_filtered.shape[0]):
         e_coords = [int (x + r * np.cos(i * angle)), int (y + r * np.sin(i * angle))] # współrzędne emitera
         for j in range(sinogram_filtered.shape[1]):
@@ -133,6 +134,13 @@ def simulate(input_path, angle, detectors, span, filter, step, dicom, patient: P
             result_step_image = Image.fromarray(result_step_scaled, mode='L')
             result_step_image.save(result_iterations_dir + "/result_iteration_" + str(step_counter) + ".png")
             step_counter += 1
+            
+            s = 0
+            for k in range(len(image)):
+                for l in range(len(image[k])):
+                    s += (image[k][l] - result_step[k][l])**2
+            mse.append(np.sqrt(s / image.size))
+
     
     max_norm = max([max(row) for row in norm])
     for j in range(result.shape[0]):
@@ -142,6 +150,13 @@ def simulate(input_path, angle, detectors, span, filter, step, dicom, patient: P
             else:
                 result[j][i] = 0
     
+    if step == 0:
+        s = 0
+        for k in range(len(image)):
+            for l in range(len(image[k])):
+                s += (image[k][l] - result[k][l])**2
+        mse.append(np.sqrt(s / image.size))
+
     result_scaled = (255.0 / np.amax(result)) * result
     result_scaled = result_scaled.astype(np.uint8)
     result_image = Image.fromarray(result_scaled, mode='L')
@@ -149,3 +164,5 @@ def simulate(input_path, angle, detectors, span, filter, step, dicom, patient: P
 
     if dicom == 1:
         save_dicom_file(result_scaled, patient.name, patient.id, patient.date, patient.comment)
+
+    return mse[-1]

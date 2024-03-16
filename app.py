@@ -78,6 +78,9 @@ class Application(ThemedTk):
         self.slider_frame = ttk.Frame(self)
         self.slider_frame.pack(pady=10)
 
+        self.mse_frame = ttk.Frame(self)
+        self.mse_frame.pack(pady=10)
+
     def toggle_dicom_fields(self):
         if self.dicom_fields_frame.winfo_viewable():
             self.dicom_fields_frame.pack_forget()
@@ -172,14 +175,20 @@ class Application(ThemedTk):
         result_path = f"./result_iterations/result_iteration_{slider_value-1}.png"
         self.display_images(sinogram_path, result_path)
 
+    def show_mse(self, mse):
+        for widget in self.mse_frame.winfo_children():
+            widget.destroy()
+        ttk.Label(self.mse_frame, text="RMSE: " + str(mse)).pack(side="top")
+
     def run_simulation(self):
         if self.dicom_var.get() == 1:
             patient = Patient(self.name_entry.get(), self.id_entry.get(), self.date_entry.get(), self.comment_entry.get())
-            simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
+            mse = simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
                  self.filter_var.get(), self.step_var.get(), self.dicom_var.get(), patient)
         else:
-            simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
+            mse = simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
                  self.filter_var.get(), self.step_var.get(), self.dicom_var.get())
+        self.show_mse(mse)
         if self.step_var.get() == 1:
             self.display_images("./result/sinogram.png", "./result/result.png")
             self.show_slider()
