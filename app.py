@@ -4,6 +4,7 @@ from ttkthemes import ThemedTk
 from tkcalendar import DateEntry
 from simulation import simulate
 from PIL import Image, ImageTk
+from patient import Patient
 
 class Application(ThemedTk):
     def __init__(self):
@@ -46,15 +47,15 @@ class Application(ThemedTk):
         self.filter_checkbox = ttk.Checkbutton(self.checkbox_frame, text="Użyj filtrowania", variable=self.filter_var)
         self.filter_checkbox.pack(side=tk.LEFT)
 
-        self.dicom_checkbox = ttk.Checkbutton(self.checkbox_frame, text="Generuj plik dicom", command=self.toggle_dicom_fields)
+        self.dicom_var = tk.IntVar()
+        self.dicom_checkbox = ttk.Checkbutton(self.checkbox_frame, text="Generuj plik dicom", command=self.toggle_dicom_fields, variable=self.dicom_var)
         self.dicom_checkbox.pack(side=tk.LEFT)
 
         self.dicom_fields_frame = ttk.Frame(self)
         self.dicom_fields_frame.pack(pady=10)
 
-        self.first_name_entry = self.create_entry(self.dicom_fields_frame, "Imię pacjenta")
-        self.last_name_entry = self.create_entry(self.dicom_fields_frame, "Nazwisko pacjenta")
-        self.pesel_entry = self.create_entry(self.dicom_fields_frame, "PESEL")
+        self.name_entry = self.create_entry(self.dicom_fields_frame, "Imię pacjenta")
+        self.id_entry = self.create_entry(self.dicom_fields_frame, "ID pacjenta")
         
         date_frame = ttk.Frame(self.dicom_fields_frame)
         date_frame.pack(side=tk.LEFT, padx=10)
@@ -112,8 +113,8 @@ class Application(ThemedTk):
         
         for widget in self.photo_frame.winfo_children():
             widget.destroy()
-        
-        img1 = Image.open(self.file_path)
+        img1 = Image.open("./result/image.png") if self.file_path[-4:] == ".dcm" else Image.open(self.file_path)
+        # img1 = Image.open(self.file_path)
         img2 = Image.open(sinogram)
         img3 = Image.open(result)
 
@@ -172,8 +173,13 @@ class Application(ThemedTk):
         self.display_images(sinogram_path, result_path)
 
     def run_simulation(self):
-        simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
-                 self.filter_var.get(), self.step_var.get())
+        if self.dicom_var.get() == 1:
+            patient = Patient(self.name_entry.get(), self.id_entry.get(), self.date_entry.get(), self.comment_entry.get())
+            simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
+                 self.filter_var.get(), self.step_var.get(), self.dicom_var.get(), patient)
+        else:
+            simulate(self.file_path, int(self.angle_entry.get()), int(self.detectors_entry.get()), int(self.span_entry.get()),
+                 self.filter_var.get(), self.step_var.get(), self.dicom_var.get())
         if self.step_var.get() == 1:
             self.display_images("./result/sinogram.png", "./result/result.png")
             self.show_slider()

@@ -6,6 +6,8 @@ from filter import filter_sinogram
 import os
 import glob
 from PIL import Image
+from patient import Patient
+from dicom_handler import read_dicom_file, save_dicom_file
 
 
 def clear_directory(directory_path):
@@ -13,12 +15,24 @@ def clear_directory(directory_path):
     for f in files:
         os.remove(f)
 
-def simulate(input_path, angle, detectors, span, filter, step):
+def create_folder_if_not_exists(folder_path):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+def simulate(input_path, angle, detectors, span, filter, step, dicom, patient: Patient = None):
     print("filtrowanie: " + str(filter))
     print("kroki pośrednie: " + str(step))
+    print("dicom: " + str(dicom))
     output_dir = "./result"
     sinogram_iterations_dir = "./sinogram_iterations"
     result_iterations_dir = "./result_iterations"
+    dicom_dir = "./dicom"
+    create_folder_if_not_exists(output_dir)
+    create_folder_if_not_exists(sinogram_iterations_dir)
+    create_folder_if_not_exists(result_iterations_dir)
+    create_folder_if_not_exists(dicom_dir)
+
+    clear_directory(dicom_dir) if dicom == 1 else None
     if step == 1:
         clear_directory(sinogram_iterations_dir)
         clear_directory(result_iterations_dir)
@@ -27,11 +41,19 @@ def simulate(input_path, angle, detectors, span, filter, step):
     
     step_counter = 0
 
-    image = imread(input_path)
-    try:
-        image = color.rgb2gray(image)
-    except ValueError:
-        pass
+    if input_path[-4:] == ".dcm":
+        image_path = output_dir + "/image.png"
+        image, _ = read_dicom_file(input_path)
+        image_scaled = (255.0 / np.amax(image)) * image
+        image_scaled = image_scaled.astype(np.uint8)
+        image_dcm = Image.fromarray(image_scaled, mode='L')
+        image_dcm.save(image_path)
+    else:
+        image = imread(input_path)
+        try:
+            image = color.rgb2gray(image)
+        except ValueError:
+            pass
 
     x = image.shape[0] / 2 # współrzędna x środka obrazu
     y = image.shape[1] / 2 # współrzędna y środka obrazu
@@ -124,3 +146,6 @@ def simulate(input_path, angle, detectors, span, filter, step):
     result_scaled = result_scaled.astype(np.uint8)
     result_image = Image.fromarray(result_scaled, mode='L')
     result_image.save(output_dir + "/result.png")
+
+    if dicom == 1:
+        save_dicom_file(result_scaled, patient.name, patient.id, patient.date, patient.comment)
